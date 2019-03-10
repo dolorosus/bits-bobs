@@ -20,15 +20,30 @@ Setup()
 
 FPromptCmd()
 {
+
+	#
+	# save the last rc
+	#
 	RET=$?
+	#
+	# calculate the CPU temperature
+	#
  	t=$(($(cat /sys/class/thermal/thermal_zone*/temp)/1000))
-	
+	#
+	# change color of username to $RED if we're root 
+	#
+	[ $(id -u) == 0 ] && UCOL=$RED || UCOL=$WHITE
+	#
+	# Build the prefix of the prompt
+	#
 	pre="${UCOL}[$USER@$HOSTNAME]$CYAN($t)$GREEN$PWD"
+	#
+	# if the last command wasn't successful, then display the RC in $RED
+	#
 	[ $RET == 0 ]  || pre=${pre}${RED}[${RET}]
 } 
 
-
 Setup
-PROMPT_COMMAND=FPromptCmd
+export PROMPT_COMMAND=FPromptCmd
 
-PS1="${pre}_:${WHITE}"
+export PS1="\${pre}_:\${WHITE}"
