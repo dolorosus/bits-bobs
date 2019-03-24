@@ -5,14 +5,15 @@
 
 Setup()
 {
-	RED=$(tput setaf 1)
- 	GREEN=$(tput setaf 2)
-	YELLOW=$(tput  setaf 3)
-	BLUE=$(tput  setaf 4)
-  	MAGENTA=$(tput  setaf 5)
-  	CYAN=$(tput  setaf 6)
-  	WHITE=$(tput  setaf 7)
-  	RESET=$(tput  setaf 9)
+	RED="\001$(tput setaf 1)\002"
+ 	GREEN="\001$(tput setaf 2)\002"
+	YELLOW="\001$(tput  setaf 3)\002"
+	BLUE="\001$(tput  setaf 4)\002"
+  	MAGENTA="\001$(tput  setaf 5)\002"
+  	CYAN="\001$(tput  setaf 6)\002"
+  	WHITE="\001$(tput  setaf 7)\002"
+  	RESET="\001$(tput  setaf 9)\002""\001$(tput sgr0)\002"
+
   
   	HOSTNAME=$(hostname)
 
@@ -46,4 +47,4 @@ FPromptCmd()
 Setup
 export PROMPT_COMMAND=FPromptCmd
 
-export PS1="\${pre}_:\${WHITE}"
+export PS1="${pre}_:${WHITE}"
