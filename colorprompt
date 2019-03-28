@@ -5,18 +5,16 @@
 
 Setup()
 {
-	RED="\001$(tput setaf 1)\002"
- 	GREEN="\001$(tput setaf 2)\002"
-	YELLOW="\001$(tput  setaf 3)\002"
-	BLUE="\001$(tput  setaf 4)\002"
-  	MAGENTA="\001$(tput  setaf 5)\002"
-  	CYAN="\001$(tput  setaf 6)\002"
-  	WHITE="\001$(tput  setaf 7)\002"
-  	RESET="\001$(tput  setaf 9)\002""\001$(tput sgr0)\002"
 
+	RED="$(tput setaf 1)"
+ 	GREEN="$(tput setaf 2)"
+	YELLOW="$(tput  setaf 3)"
+	BLUE="$(tput  setaf 4)"
+  	MAGENTA="$(tput  setaf 5)"
+  	CYAN="$(tput  setaf 6)"
+  	WHITE="$(tput  setaf 7)"
+  	RESET="$(tput  setaf 9)$(tput sgr0)"
   
-  	HOSTNAME=$(hostname)
-
 }
 
 FPromptCmd()
@@ -25,7 +23,8 @@ FPromptCmd()
 	#
 	# save the last rc
 	#
-	RET=$?
+	export RET=$?
+	[ "$RET" == "0" ] && post="" || post="[$RET]"
 	#
 	# calculate the CPU temperature
 	#
@@ -33,18 +32,23 @@ FPromptCmd()
 	#
 	# change color of username to $RED if we're root 
 	#
-	[ $(id -u) == 0 ] && UCOL=$RED || UCOL=$WHITE
+	[ $(id -u) == 0 ] && { 
+		UCOL=$RED 
+		PR="_#"}||{
+		UCOL=$WHITE
+		PR="_:"}
+		
 	#
-	# Build the prefix of the prompt
-	#
-	pre="${UCOL}[$USER@$HOSTNAME]$CYAN($t)$GREEN$PWD"
-	#
-	# if the last command wasn't successful, then display the RC in $RED
-	#
-	[ $RET == 0 ]  || pre=${pre}${RED}[${RET}]
+
 } 
 
 Setup
 export PROMPT_COMMAND=FPromptCmd
 
-export PS1="${pre}_:${WHITE}"
+PS1="\[${UCOL}\][\u@\h]\[$CYAN\]"
+PS1+="(\$t)"
+PS1+="\[$GREEN\]"
+PS1+="\w"
+PS1+="\[${RED}\]\${post}\[${GREEN}\]$PR"
+PS1+="\[${WHITE}\]"
+export PS1
