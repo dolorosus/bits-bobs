@@ -44,11 +44,11 @@ FPromptCmd()
 
 Setup
 export PROMPT_COMMAND=FPromptCmd
-
-PS1="\[${UCOL}\][\u@\h]\[$CYAN\]"
-PS1+="(\$t)"
+PS1="(\$t)\[$INV\]\[\$UCOL\]\u@\h\[$NORMAL\]\[$CYAN\]"
 PS1+="\[$GREEN\]"
 PS1+="\w"
-PS1+="\[${RED}\]\${post}\[${GREEN}\]$PR"
-PS1+="\[${WHITE}\]"
+PS1+="\[$RED\]\${post}\[$GREEN\]\$PR"
+PS1+="\[$WHITE\]"
 export PS1
+
+
