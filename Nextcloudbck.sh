@@ -61,7 +61,7 @@ MYANME=${0##*/}
 #  adapt this to to needs
 #
 export STACKNAME=nextcloud
-export BCKDIR=/Downloads/Nextcloudbck
+export BCKDIR=/mnt/USB64/NEXTCLOUDBCK/
 export BCKNAME=${STACKNAME}_$(date +'%Y%M%d_%H%m%S').tar.xz
 
 export XZ_DEFAULTS="--threads=4 -6"
