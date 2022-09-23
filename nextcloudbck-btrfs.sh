@@ -2,7 +2,6 @@
 #
 #
 
-
 #
 # Just in case COLORS.sh couldn't be found...
 #
@@ -25,9 +24,6 @@ msgwarn() {
 msgfail() {
     echo -e "${CROSS} ${1}" >&2
 }
-
-colors=${0%%${0##*/}}COLORS.sh
-[ -f ${colors} ] && source ${colors}
 
 errexit() {
     echo "${myname}: Trying to restart containers"
@@ -55,8 +51,6 @@ execCmd() {
 }
 # =================== Main ==================================================
 
-exec &> >(tee "${0%%.sh}.out")
-MYANME=${0##*/}
 #
 #  adapt this to to needs
 #
@@ -67,13 +61,9 @@ MYANME=${0##*/}
 # E.g. :
 #
 
-#    
-#    # creating the subvolume for the stack:
-#    btrfs subvol create /mnt/USB64/nextcloud
 #
-#    # create the path for snapshots
-#    mkdir -p /mnt/USB64/.snapshots/NEXTCLOUDBCK
-# 
+
+#
 #
 #  Pointing to the subvol in your docker-compose script:
 #
@@ -87,12 +77,25 @@ MYANME=${0##*/}
 
 # For btrfs-snapshot-rotation.sh take a look to https://github.com/dolorosus/RaspiBackup
 #
-SNAPSCRIPT=${0%%${0##*/}}/btrfs-snapshot-rotation.sh 
+
+export MYANME=${0##*/}
+export ORGNAME=$(readlink -f "${0}")
+
+colors=${ORGNAME%%${ORGNAME##*/}}COLORS.sh
+[ -f ${colors} ] && . ${colors}
+
+SNAPSCRIPT=${ORGNAME%%${ORGNAME##*/}}/btrfs-snapshot-rotation.sh
+[ -x "${SNAPSCRIPT}" ] || {
+    msgfail "Script ${SNAPSCRIPT} not found or not executable"
+    exit 99
+}
 
 STACKNAME="nextcloud"
 
 srcvol="/mnt/USB64"
 srcpath="${srcvol}/${STACKNAME}"
+
+
 snappath="${srcvol}/.snapshots/NEXTCLOUDBCK"
 snapname=$(date "+%F--%H-%M-%S")
 mark="manual"
@@ -100,19 +103,20 @@ versions=28
 
 dstvol="/Downloads"
 dstpath="Nextcloudbck"
+
 bckname="${STACKNAME}-${snapname}.tar.xz"
 
 export XZ_DEFAULTS="--threads=4 -6"
 
 # ------------------ Here we go ----------------------------------------------
+exec &> >(tee "${0%%.sh}.out")
 
 trap errexit SIGINT SIGTERM
 
-
-dbcont=$(docker container ls | grep ${STACKNAME}-db | cut -d\  -f1) 
+dbcont=$(docker container ls | grep ${STACKNAME}-db | cut -d\  -f1)
 [ -z "${dbcont}" ] && errexit "DB container cannot be found. Is it up?" 5
 
-appcont=$(docker container ls | grep ${STACKNAME}-app | cut -d\  -f1) 
+appcont=$(docker container ls | grep ${STACKNAME}-app | cut -d\  -f1)
 [ -z "${appcont}" ] && errexit "APP container cannot be found. Is it up?" 6
 
 execCmd "docker container stop ${appcont}" || exit 10
