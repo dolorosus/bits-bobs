@@ -62,7 +62,11 @@ execCmd() {
 #
 
 #
-
+#    # creating the subvolume for the stack:
+#    btrfs subvol create /mnt/USB64/nextcloud
+#
+#    # create the path for snapshots
+#    mkdir -p /mnt/USB64/.snapshots/NEXTCLOUDBCK
 #
 #
 #  Pointing to the subvol in your docker-compose script:
@@ -81,7 +85,7 @@ execCmd() {
 export MYANME=${0##*/}
 export ORGNAME=$(readlink -f "${0}")
 
-colors=${ORGNAME%%${ORGNAME##*/}}COLORS.sh
+colors=${orgname%%${orgname##*/}}COLORS.sh
 [ -f ${colors} ] && . ${colors}
 
 SNAPSCRIPT=${ORGNAME%%${ORGNAME##*/}}/btrfs-snapshot-rotation.sh
@@ -130,6 +134,6 @@ execCmd "docker container start ${appcont}" || exit 30
 #
 # take a copy to another volume
 #
-execCmd "cd ${snappath}/${snapname}@${mark}"
+execCmd "cd ${snappath}/${snapname}@${mark}" || exit 40
 execCmd "find ${dstvol}/${dstpath}  -maxdepth 0 -name ${STACKNAME}-\*.tar.xz  -type f -mtime +7 -delete"
-execCmd "tar --xz -cvf  ${dstvol}/${dstpath}/${bckname} * " || exit 20
+execCmd "tar --xz -cvf  ${dstvol}/${dstpath}/${bckname} * " || exit 50
