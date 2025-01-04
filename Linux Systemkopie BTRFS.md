@@ -59,8 +59,7 @@ root@lanb109:~# mount /dev/nvme0n1p2  /mnt/dst
 cd /dev/dst/
 btrfs subvolume create @
 
-# ggf. so alle Subvol, die nötig sind anlegen 
-# 
+# ggf. so alle Subvolumes anlegen, die nötig sind. 
 # 
 ```
 ### Mit rsync kopieren
@@ -68,7 +67,10 @@ btrfs subvolume create @
 # mit rsync kopieren
 # ACHTUNG bei der Quelle mit trailing / beim Ziel nicht
 root@lanb109:~# rsync --stats --progress --numeric-ids -axAhHP  /mnt/src/@/ /mnt/dst/@
-# durchführen
+
+# Wenn es schnell gehen muss dann "--stats --progress" durch "--quiet" ersetzen.
+#
+#  Das Ganze für alle zu kopierenden Partitionen durchführen
 ```
 ### Capabilities ermitteln und setzen
 ```
@@ -117,10 +119,8 @@ root@lanb109:~# lsblk -f
 # Die Partionen einhängen:
 #
 root@lanb109:~# mkdir /mnt/{root,home}
-root@lanb109:~# mount /dev/nvme0n1p2 -o subvol=/@
- /mnt/
-root@lanb109:~# mount /dev/nvme0n1p3 -o subvol=/@home
- /mnt/home
+root@lanb109:~# mount /dev/nvme0n1p2 -o subvol=/@  /mnt/
+root@lanb109:~# mount /dev/nvme0n1p3 -o subvol=/@home /mnt/home
 root@lanb109:~# mount /dev/nvme0n1p1 /mnt/boot/efi
 
 # in /mnt/etc/fstab die UUIDs der Partitionen anpassen.
@@ -149,7 +149,7 @@ Es sollten noch die beiden Dateien `70-persistent-cd.rules` und `70-persisten
 
 Nach einem Neustart sollte der Rechner jetzt mit dem umgezogenen System normal starten. Bei Problemen startet man den Rechner erneut mit der Live-DVD und kontrolliert nochmal sorgfältig die UUIDs und die GRUB 2-Konfiguration.
 
-Falls der Ruhezustand (suspend-to-disk) genutzt werden soll, muss die Datei **`/etc/initramfs-tools/conf.d/resume`** mit Root-Rechten editiert werden und folgende Zeile eingefügt bzw. mit der eigenen Swap- <UUID> angepasst werden:
+Falls der Ruhezustand (suspend-to-disk) genutzt werden soll, muss die Datei `/etc/initramfs-tools/conf.d/resume` mit Root-Rechten editiert werden und folgende Zeile eingefügt bzw. mit der eigenen Swap- <UUID> angepasst werden:
 
 `RESUME=UUID=<UUID>`
 
