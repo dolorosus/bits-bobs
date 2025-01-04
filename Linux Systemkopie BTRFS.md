@@ -49,34 +49,40 @@ root@lanb109:~# mkdir /mnt/{src,dst}
 root@lanb109:~# mount /dev/sdb9 -o ro /mnt/src
 root@lanb109:~# mount /dev/nvme0n1p2  /mnt/dst
 
-# Bei btrfs und Timeshift befindet sich das Rootverzeichnis 
-# im Subvolume '/@'
-# Auf dem Ziel das Subvolume anlegen:
-#
+
 ```
 ### Subvolumes anlegen
 ```sh
+
+# Bei btrfs mit timeshift befindet sich das Rootverzeichnis 
+# im Subvolume '/@' 
+#
+# Auf dem Ziel das Subvolume anlegen:
+#
 cd /dev/dst/
 btrfs subvolume create @
 
-# ggf. so alle Subvolumes anlegen, die nötig sind. 
+# ggf. so alle Subvolumes (z.b. @home...) anlegen, die nötig sind. 
 # 
 ```
 ### Mit rsync kopieren
 ```sh
 # mit rsync kopieren
 # ACHTUNG bei der Quelle mit trailing / beim Ziel nicht
+#
 root@lanb109:~# rsync --stats --progress --numeric-ids -axAhHP  /mnt/src/@/ /mnt/dst/@
 
 # Wenn es schnell gehen muss dann "--stats --progress" durch "--quiet" ersetzen.
 #
 #  Das Ganze für alle zu kopierenden Partitionen durchführen
+#
 ```
 ### Capabilities ermitteln und setzen
 ```
 # eine Programme (bsp. ping) benötigen bestimmte Capabilities
 #
 # ermitteln der Programme und Capabilities
+#
 cd /mnt/src/@
 root@lanb109:/mnt/src/@# for i in bin/*; do getcap "$i"; done  
 bin/kwin_wayland cap_sys_nice=ep  
@@ -106,6 +112,7 @@ root@lanb109:~# umount /mnt/dst
 la@lanb109:~$ sudo -i
 
 # mit lsblk die UUIDs der neuen Partitionen ermitteln:
+#
 root@lanb109:~# lsblk -f
                                                                                     
 ├─nvme0n1p1 vfat      FAT32 EFI       5031-120C                             190,8M     3% /boot/efi  
@@ -124,10 +131,11 @@ root@lanb109:~# mount /dev/nvme0n1p3 -o subvol=/@home /mnt/home
 root@lanb109:~# mount /dev/nvme0n1p1 /mnt/boot/efi
 
 # in /mnt/etc/fstab die UUIDs der Partitionen anpassen.
-
+#
 # GRUB2 installieren:
 # 
 # Dateisysteme für chroot Umgebung bereitstellen:
+#
 root@lanb109:~# mount -o bind /dev /mnt/dev
 root@lanb109:~# mount -o bind /sys /mnt/sys
 root@lanb109:~# mount -t proc /proc /mnt/proc
@@ -135,6 +143,7 @@ root@lanb109:~# mount -t proc /proc /mnt/proc
 #   Hier weitere Partitionen (sieh fstab) einhängen
 # 
 # Wechsel in das neue System
+#
 root@lanb109:~# chroot /mnt
 root@lanb109:~# update-grub2
 root@lanb109:~# grub-install /dev/....
