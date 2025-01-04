@@ -125,7 +125,7 @@ root@lanb109:~# lsblk -f
 ```sh
 # Die Partionen einhängen:
 #
-root@lanb109:~# mkdir /mnt/{root,home}
+root@lanb109:~# mkdir /mnt/home
 root@lanb109:~# mount /dev/nvme0n1p2 -o subvol=/@  /mnt/
 root@lanb109:~# mount /dev/nvme0n1p3 -o subvol=/@home /mnt/home
 root@lanb109:~# mount /dev/nvme0n1p1 /mnt/boot/efi
