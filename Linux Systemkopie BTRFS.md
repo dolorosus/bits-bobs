@@ -1,4 +1,5 @@
-# Systemkopie Linux auf BTRFS Partition:
+#linux #systemkopie #capabilities
+
 
 ## Das System von einer Live-DVD booten
 
@@ -49,40 +50,34 @@ root@lanb109:~# mkdir /mnt/{src,dst}
 root@lanb109:~# mount /dev/sdb9 -o ro /mnt/src
 root@lanb109:~# mount /dev/nvme0n1p2  /mnt/dst
 
-
+# Bei btrfs und Timeshift befindet sich das Rootverzeichnis 
+# im Subvolume '/@'
+# Auf dem Ziel das Subvolume anlegen:
+#
 ```
 ### Subvolumes anlegen
 ```sh
-
-# Bei btrfs mit timeshift befindet sich das Rootverzeichnis 
-# im Subvolume '/@' 
-#
-# Auf dem Ziel das Subvolume anlegen:
-#
 cd /dev/dst/
 btrfs subvolume create @
 
-# ggf. so alle Subvolumes (z.b. @home...) anlegen, die nötig sind. 
+# ggf. so alle Subvol, die nötig sind anlegen 
+# 
 # 
 ```
+
+## Dateien kopieren
 ### Mit rsync kopieren
 ```sh
 # mit rsync kopieren
 # ACHTUNG bei der Quelle mit trailing / beim Ziel nicht
-#
 root@lanb109:~# rsync --stats --progress --numeric-ids -axAhHP  /mnt/src/@/ /mnt/dst/@
-
-# Wenn es schnell gehen muss dann "--stats --progress" durch "--quiet" ersetzen.
-#
-#  Das Ganze für alle zu kopierenden Partitionen durchführen
-#
+# durchführen
 ```
 ### Capabilities ermitteln und setzen
 ```
 # eine Programme (bsp. ping) benötigen bestimmte Capabilities
 #
 # ermitteln der Programme und Capabilities
-#
 cd /mnt/src/@
 root@lanb109:/mnt/src/@# for i in bin/*; do getcap "$i"; done  
 bin/kwin_wayland cap_sys_nice=ep  
@@ -103,7 +98,7 @@ root@lanb109:~# umount /mnt/dst
 # durchführen
 ```
 
-### alten Datenträger entfernen.
+## alten Datenträger entfernen.
 ### UUIDs in der neuen fstab anpassen
 
 ```sh
@@ -112,40 +107,68 @@ root@lanb109:~# umount /mnt/dst
 la@lanb109:~$ sudo -i
 
 # mit lsblk die UUIDs der neuen Partitionen ermitteln:
-#
 root@lanb109:~# lsblk -f
                                                                                     
 ├─nvme0n1p1 vfat      FAT32 EFI       5031-120C                             190,8M     3% /boot/efi  
 ├─nvme0n1p2 btrfs           ROOT      516a8ebd-9e9d-4a9b-9e6e-9232509084ec  144,5G    41%  /  
 ├─nvme0n1p3 btrfs           HOME      e20e3d90-69f4-4d11-b2ea-50da615d7a84  346,3G    46% /home  
 
+
 ```
 
-### GRUB2 installieren
+und in der `/mnt/etc/fstab` eintragen
+
+
+## Zielpartition vorbereiten
+### Die ZIEL-Partionen einhängen
 ```sh
-# Die Partionen einhängen:
+# Die ZIEL-Partionen einhängen:
+#
 #
 root@lanb109:~# mkdir /mnt/home
-root@lanb109:~# mount /dev/nvme0n1p2 -o subvol=/@  /mnt/
-root@lanb109:~# mount /dev/nvme0n1p3 -o subvol=/@home /mnt/home
-root@lanb109:~# mount /dev/nvme0n1p1 /mnt/boot/efi
-
-# in /mnt/etc/fstab die UUIDs der Partitionen anpassen.
+root@lanb109:~# mount /dev/ZIELROOT -o subvol=/@
+ /mnt/
+root@lanb109:~# mount /dev/ZIELHOME -o subvol=/@home
+ /mnt/home
+# 
+# SWAP liegt oft auf /dev/ZIELROOT
+# 
+# root@lanb109:~# mount /dev/ZIELROOT -o subvol=@swap /mnt/swap
+root@lanb109:~# mount /dev/ZIELSWAP /mnt/swap
+root@lanb109:~# mount /dev/ZIELBOOT /mnt/boot/efi
 #
-# GRUB2 installieren:
+```
+
+### mit chroot in das neue System wechseln:
+```sh
 # 
 # Dateisysteme für chroot Umgebung bereitstellen:
-#
 root@lanb109:~# mount -o bind /dev /mnt/dev
 root@lanb109:~# mount -o bind /sys /mnt/sys
 root@lanb109:~# mount -t proc /proc /mnt/proc
 # 
-#   Hier weitere Partitionen (sieh fstab) einhängen
+#  ggf. weitere Partitionen (siehe fstab) einhängen
 # 
 # Wechsel in das neue System
-#
 root@lanb109:~# chroot /mnt
+
+```
+
+### Swap vorbereiten
+```sh
+root@lanb109:~# fallocate -l xxxGB /swap/swapfile
+root@lanb109:~# mkswap /swap/swapfile
+root@lanb109:~# swapon /swap/swapfile
+
+```
+
+### GRUB2 installieren:
+```sh
+
 root@lanb109:~# update-grub2
+# 
+#
+#
 root@lanb109:~# grub-install /dev/....
 root@lanb109:~# update-grub
 
@@ -158,7 +181,7 @@ Es sollten noch die beiden Dateien `70-persistent-cd.rules` und `70-persisten
 
 Nach einem Neustart sollte der Rechner jetzt mit dem umgezogenen System normal starten. Bei Problemen startet man den Rechner erneut mit der Live-DVD und kontrolliert nochmal sorgfältig die UUIDs und die GRUB 2-Konfiguration.
 
-Falls der Ruhezustand (suspend-to-disk) genutzt werden soll, muss die Datei `/etc/initramfs-tools/conf.d/resume` mit Root-Rechten editiert werden und folgende Zeile eingefügt bzw. mit der eigenen Swap- <UUID> angepasst werden:
+Falls der Ruhezustand (suspend-to-disk) genutzt werden soll, muss die Datei **`/etc/initramfs-tools/conf.d/resume`** mit Root-Rechten editiert werden und folgende Zeile eingefügt bzw. mit der eigenen Swap- <UUID> angepasst werden:
 
 `RESUME=UUID=<UUID>`
 
