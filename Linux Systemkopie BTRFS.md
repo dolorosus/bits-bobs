@@ -45,7 +45,8 @@ root@lanb109:~# mkdir /mnt/{src,dst}
 ### Partitionen mounten
 
 ```sh
-# einhängen der Partitionen. Die Quelle als nur-lesen einhängen
+# Einhängen der Partitionen.
+# Quelle (/dev/sda9) als nur-lesen einhängen
 #
 root@lanb109:~# mount /dev/sdb9 -o ro /mnt/src
 root@lanb109:~# mount /dev/nvme0n1p2  /mnt/dst
@@ -69,7 +70,8 @@ btrfs subvolume create @
 ### Mit rsync kopieren
 ```sh
 # mit rsync kopieren
-# ACHTUNG bei der Quelle mit trailing / beim Ziel nicht
+# ACHTUNG bei der Quelle mit trailing '/' beim Ziel nicht
+
 root@lanb109:~# rsync --stats --progress --numeric-ids -axAhHP  /mnt/src/@/ /mnt/dst/@
 # durchführen
 ```
@@ -113,29 +115,39 @@ root@lanb109:~# lsblk -f
 ├─nvme0n1p2 btrfs           ROOT      516a8ebd-9e9d-4a9b-9e6e-9232509084ec  144,5G    41%  /  
 ├─nvme0n1p3 btrfs           HOME      e20e3d90-69f4-4d11-b2ea-50da615d7a84  346,3G    46% /home  
 
-
 ```
 
 und in der `/mnt/etc/fstab` eintragen
 
+```
+...
+UUID=5031-120C                              /boot/efi     vfat    defaults,umask=0077                0 2
+UUID=516a8ebd-9e9d-4a9b-9e6e-9232509084ec   /             btrfs   subvol=@,defaults,noatime          0 0
+UUID=e20e3d90-69f4-4d11-b2ea-50da615d7a84   /home         btrfs   subvol=@home,defaults,noatime      0 0
+#
+#
+UUID=3e20e3d90-69f4-4d11-b2ea-50da615d7a84 /swap            btrfs   subvol=@swap,defaults,noatime    0 0
+/swap/swapfile                              swap            swap    defaults                         0 0
+...
+```
 
 ## Zielpartition vorbereiten
 ### Die ZIEL-Partionen einhängen
+Beim mounten die UUID verwenden, um sicherzustellen, dass die richtige Partion
+gemountet wird.
+
 ```sh
 # Die ZIEL-Partionen einhängen:
-#
-#
+
 root@lanb109:~# mkdir /mnt/home
-root@lanb109:~# mount /dev/ZIELROOT -o subvol=/@
- /mnt/
-root@lanb109:~# mount /dev/ZIELHOME -o subvol=/@home
- /mnt/home
+root@lanb109:~# mount UUID=516a8ebd-9e9d-4a9b-9e6e-9232509084ec -o subvol=/@  /mnt/
+root@lanb109:~# mount UUID=e20e3d90-69f4-4d11-b2ea-50da615d7a84 -o subvol=/@home /mnt/home
 # 
 # SWAP liegt oft auf /dev/ZIELROOT
 # 
-# root@lanb109:~# mount /dev/ZIELROOT -o subvol=@swap /mnt/swap
-root@lanb109:~# mount /dev/ZIELSWAP /mnt/swap
-root@lanb109:~# mount /dev/ZIELBOOT /mnt/boot/efi
+root@lanb109:~# mount UUID=516a8ebd-9e9d-4a9b-9e6e-9232509084ec -o subvol=@swap /mnt/swap
+root@lanb109:~# mount UUID=3e20e3d90-69f4-4d11-b2ea-50da615d7a84 /mnt/swap
+root@lanb109:~# mount UUID=5031-120C /mnt/boot/efi
 #
 ```
 
@@ -156,7 +168,8 @@ root@lanb109:~# chroot /mnt
 
 ### Swap vorbereiten
 ```sh
-root@lanb109:~# fallocate -l xxxGB /swap/swapfile
+root@lanb109:~# # bei ext4      fallocate -l xxxGB /swap/swapfile
+root@lanb109:~# # bei btrfs     btrfs filesystem mkswapfile --size=8g  /swap/swapfile
 root@lanb109:~# mkswap /swap/swapfile
 root@lanb109:~# swapon /swap/swapfile
 
